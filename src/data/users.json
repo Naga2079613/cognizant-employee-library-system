@@ -1,0 +1,64 @@
+[
+  {
+    "id": "1",
+    "email": "admin@cognizant.com",
+    "name": "Library Admin",
+    "role": "admin"
+  },
+  {
+    "id": "2",
+    "email": "john.doe@cognizant.com",
+    "name": "John Doe",
+    "role": "employee",
+    "department": "Engineering",
+    "employeeId": "EMP001"
+  },
+  {
+    "id": "3",
+    "email": "jane.smith@cognizant.com",
+    "name": "Jane Smith",
+    "role": "employee",
+    "department": "Marketing",
+    "employeeId": "EMP002"
+  },
+  {
+    "id": "4",
+    "email": "mike.johnson@cognizant.com",
+    "name": "Mike Johnson",
+    "role": "employee",
+    "department": "Engineering",
+    "employeeId": "EMP003"
+  },
+  {
+    "id": "5",
+    "email": "sarah.wilson@cognizant.com",
+    "name": "Sarah Wilson",
+    "role": "employee",
+    "department": "HR",
+    "employeeId": "EMP004"
+  },
+  {
+    "id": "6",
+    "email": "david.brown@cognizant.com",
+    "name": "David Brown",
+    "role": "employee",
+    "department": "Finance",
+    "employeeId": "EMP005"
+  },
+  {
+    "id": "7",
+    "email": "emma.davis@cognizant.com",
+    "name": "Emma Davis",
+    "role": "employee",
+    "department": "Engineering",
+    "employeeId": "EMP006"
+  },
+  {
+    "id": "8",
+    "email": "robert.taylor@cognizant.com",
+    "name": "Robert Taylor",
+    "role": "employee",
+    "department": "Sales",
+    "employeeId": "EMP007"
+  }
+]
