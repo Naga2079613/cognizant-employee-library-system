@@ -2,6 +2,12 @@
 
 A comprehensive React TypeScript web application for managing a company library system, enabling employees to browse and request books while providing administrators with tools to manage inventory and requests.
 
+## 🌐 Live Demo
+
+**GitHub Pages**: [View Live Application](https://YOUR_USERNAME.github.io/REPOSITORY_NAME/)
+
+> Replace `YOUR_USERNAME` and `REPOSITORY_NAME` with your actual GitHub details
+
 ## 🚀 Features
 
 ### Employee Portal
@@ -146,7 +152,49 @@ src/
 - **Loading States**: Proper loading indicators for better UX
 - **Error Handling**: User-friendly error messages
 
-## 🔮 Future Enhancements
+## � Deployment
+
+### GitHub Pages Deployment
+
+This project is configured with GitHub Actions for automatic deployment to GitHub Pages.
+
+#### Setup Instructions:
+
+1. **Create GitHub Repository**:
+   ```bash
+   git remote add origin https://github.com/YOUR_USERNAME/REPOSITORY_NAME.git
+   git push -u origin main
+   ```
+
+2. **Enable GitHub Pages**:
+   - Go to your repository settings
+   - Navigate to "Pages" section
+   - Select "Deploy from a branch"
+   - Choose "gh-pages" branch (created automatically by the workflow)
+
+3. **Automatic Deployment**:
+   - Every push to the `main` branch triggers automatic build and deployment
+   - The workflow builds the React app and deploys to GitHub Pages
+   - Live site will be available at: `https://YOUR_USERNAME.github.io/REPOSITORY_NAME/`
+
+#### Manual Deployment:
+
+```bash
+# Build the project
+npm run build
+
+# Deploy the dist folder to your hosting service
+# The built files will be in the 'dist' directory
+```
+
+### Alternative Hosting Options:
+
+- **Vercel**: Connect your GitHub repo for automatic deployments
+- **Netlify**: Drag and drop the `dist` folder or connect via Git
+- **Firebase Hosting**: Use Firebase CLI to deploy
+- **AWS S3**: Static website hosting with CloudFront CDN
+
+## �🔮 Future Enhancements
 
 ### Backend Integration
 - Replace mock data service with actual API
