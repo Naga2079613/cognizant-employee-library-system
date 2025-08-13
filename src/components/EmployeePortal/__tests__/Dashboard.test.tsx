@@ -180,7 +180,7 @@ describe('Dashboard', () => {
   });
 
   it('navigates to books page when Browse Books is clicked', () => {
-    const { container } = renderWithProviders(<Dashboard />);
+    renderWithProviders(<Dashboard />);
     
     const browseButton = screen.getByText('Browse Books');
     fireEvent.click(browseButton);
@@ -190,7 +190,7 @@ describe('Dashboard', () => {
   });
 
   it('navigates to requests page when View Requests is clicked', () => {
-    const { container } = renderWithProviders(<Dashboard />);
+    renderWithProviders(<Dashboard />);
     
     const requestsButton = screen.getByText('View Requests');
     fireEvent.click(requestsButton);
