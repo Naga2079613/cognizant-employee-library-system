@@ -27,7 +27,7 @@ function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
-        <Router basename="/cognizant-employee-library-system">
+        <Router>
           <div className="flex flex-col min-h-screen w-full">
             <Navbar />
             <main className="flex-1 w-full min-h-[calc(100vh-64px)]">
