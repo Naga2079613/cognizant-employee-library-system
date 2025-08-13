@@ -1,15 +1,7 @@
 import { useState, type FormEvent } from 'react';
-import {
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-} from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
+import { DataService } from '../../services/dataService';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -41,8 +33,9 @@ const Login = () => {
       const success = await login(email, password);
       
       if (success) {
-        const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        const redirectPath = currentUser.role === 'admin' ? '/admin' : '/employee';
+        // Get the user data directly from DataService to determine role
+        const userData = DataService.getUserByEmail(email);
+        const redirectPath = userData?.role === 'admin' ? '/admin' : '/employee';
         navigate(redirectPath);
       } else {
         setError('Invalid email or password');
@@ -55,110 +48,82 @@ const Login = () => {
   };
 
   return (
-    <Box 
-      sx={{ 
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        p: 2
-      }}
-    >
-      <Container component="main" maxWidth="sm">
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Paper 
-            elevation={10} 
-            sx={{ 
-              padding: 4, 
-              width: '100%',
-              borderRadius: '20px',
-              background: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(10px)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
-            }}
-          >
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Typography component="h1" variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
-                📚 Cognizant Digital Library
-              </Typography>
-              <Typography variant="h6" color="textSecondary" gutterBottom>
-                Employee Login Portal
-              </Typography>
-            </Box>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="glass-card p-8">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              📚 Cognizant Digital Library
+            </h1>
+            <p className="text-lg text-gray-600">
+              Employee Login Portal
+            </p>
+          </div>
           
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+              {error}
+            </div>
+          )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Email Address"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  '&:hover fieldset': {
-                    borderColor: '#667eea',
-                  },
-                },
-              }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px',
-                  '&:hover fieldset': {
-                    borderColor: '#667eea',
-                  },
-                },
-              }}
-            />
-            <Button
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError(''); // Clear error when user starts typing
+                }}
+                disabled={loading}
+                className="modern-input w-full px-4 py-3 border-0 focus:outline-none"
+                placeholder="Enter your email"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (error) setError(''); // Clear error when user starts typing
+                }}
+                disabled={loading}
+                className="modern-input w-full px-4 py-3 border-0 focus:outline-none"
+                placeholder="Enter your password"
+              />
+            </div>
+            
+            <button
               type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ 
-                mt: 3, 
-                mb: 2,
-                py: 1.5,
-                borderRadius: '12px',
-                background: 'linear-gradient(45deg, #667eea, #764ba2)',
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #5a67d8, #6b46c1)',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
-                }
-              }}
               disabled={loading}
+              className={`modern-button w-full py-4 text-lg font-bold ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               {loading ? '🔄 Signing In...' : '🚀 Sign In'}
-            </Button>
-          </Box>
+            </button>
+          </form>
 
-          <Box sx={{ mt: 3, p: 2, backgroundColor: 'grey.100', borderRadius: 1 }}>
-            <Typography variant="subtitle2" gutterBottom>Demo Credentials:</Typography>
-            <Typography variant="body2"><strong>Admin:</strong> admin@cognizant.com / pass@123</Typography>
-            <Typography variant="body2"><strong>Employee:</strong> john.doe@cognizant.com / pass@123</Typography>
-          </Box>
-        </Paper>
-      </Box>
-    </Container>
-    </Box>
+          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <p className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</p>
+            <p className="text-sm text-gray-600"><strong>Admin:</strong> admin@cognizant.com / pass@123</p>
+            <p className="text-sm text-gray-600"><strong>Employee:</strong> john.doe@cognizant.com / pass@123</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

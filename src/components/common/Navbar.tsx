@@ -1,15 +1,3 @@
-import { useState, type MouseEvent } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-} from '@mui/material';
-import { AccountCircle, Book, ExitToApp } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -17,20 +5,10 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleMenu = (event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-    handleClose();
   };
 
   if (!user || location.pathname === '/login') {
@@ -38,112 +16,155 @@ const Navbar = () => {
   }
 
   return (
-    <AppBar position="static" sx={{ width: '100%', left: 0, right: 0 }}>
-      <Toolbar sx={{ maxWidth: '100%', px: { xs: 2, sm: 3 } }}>
-        <Book sx={{ mr: 2, fontSize: '2rem' }} />
-        <Typography 
-          variant="h6" 
-          component="div" 
-          sx={{ 
-            flexGrow: 1,
-            fontWeight: 'bold',
-            fontSize: { xs: '1.1rem', sm: '1.5rem' },
-            background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-            backgroundClip: 'text',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          📚 Cognizant Digital Library
-        </Typography>
-        
-        {user.role === 'employee' && (
-          <Box sx={{ mr: 2 }}>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/employee')}
-              sx={{ mr: 1 }}
-            >
-              Dashboard
-            </Button>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/employee/books')}
-              sx={{ mr: 1 }}
-            >
-              Browse Books
-            </Button>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/employee/requests')}
-            >
-              My Requests
-            </Button>
-          </Box>
-        )}
+    <nav className="glass-card mb-0 rounded-none border-x-0 border-t-0 border-b border-white/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo and Title */}
+          <div className="flex items-center space-x-3">
+            <div className="text-2xl">📚</div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">
+                Cognizant Digital Library
+              </h1>
+              <p className="text-xs text-gray-600">
+                {user.role === 'admin' ? 'Admin Portal' : 'Employee Portal'}
+              </p>
+            </div>
+          </div>
 
-        {user.role === 'admin' && (
-          <Box sx={{ mr: 2 }}>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/admin')}
-              sx={{ mr: 1 }}
-            >
-              Dashboard
-            </Button>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/admin/books')}
-              sx={{ mr: 1 }}
-            >
-              Manage Books
-            </Button>
-            <Button 
-              color="inherit" 
-              onClick={() => navigate('/admin/requests')}
-            >
-              Manage Requests
-            </Button>
-          </Box>
-        )}
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user.role === 'employee' && (
+              <>
+                <button
+                  onClick={() => navigate('/employee')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${location.pathname === '/employee' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  🏠 Dashboard
+                </button>
+                <button
+                  onClick={() => navigate('/employee/books')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${location.pathname === '/books' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  📚 Browse Books
+                </button>
+                <button
+                  onClick={() => navigate('/employee/requests')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${location.pathname === '/requests' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  📋 My Requests
+                </button>
+              </>
+            )}
 
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="body2" sx={{ mr: 1 }}>
-            {user.name}
-          </Typography>
-          <IconButton
-            size="large"
-            aria-label="account of current user"
-            aria-controls="menu-appbar"
-            aria-haspopup="true"
-            onClick={handleMenu}
-            color="inherit"
-          >
-            <AccountCircle />
-          </IconButton>
-          <Menu
-            id="menu-appbar"
-            anchorEl={anchorEl}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-          >
-            <MenuItem onClick={handleLogout}>
-              <ExitToApp sx={{ mr: 1 }} />
-              Logout
-            </MenuItem>
-          </Menu>
-        </Box>
-      </Toolbar>
-    </AppBar>
+            {user.role === 'admin' && (
+              <>
+                <button
+                  onClick={() => navigate('/admin')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${location.pathname === '/admin' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  🏠 Dashboard
+                </button>
+                <button
+                  onClick={() => navigate('/admin/books')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${location.pathname === '/admin/books' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  📚 Manage Books
+                </button>
+                <button
+                  onClick={() => navigate('/admin/requests')}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium ${location.pathname === '/admin/requests' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  📋 Manage Requests
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* User Menu */}
+          <div className="flex items-center space-x-4">
+            {/* User Info */}
+            <div className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 rounded-xl border border-white/20 bg-white/30 backdrop-blur-sm shadow-sm">
+              <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white font-bold shadow-md">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="hidden sm:block text-left">
+                <div className="font-medium text-gray-800 text-sm">{user.name}</div>
+                <div className="text-xs text-gray-600">{user.role}</div>
+              </div>
+            </div>
+
+            {/* Simple Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 border border-red-200 bg-white shadow-sm"
+              title="Sign Out"
+            >
+              <svg 
+                className="w-4 h-4" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013 3v1" />
+              </svg>
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      <div className="md:hidden border-t border-white/30 px-4 py-3">
+        <div className="flex flex-wrap gap-2">
+          {user.role === 'employee' && (
+            <>
+              <button
+                onClick={() => navigate('/employee')}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${location.pathname === '/employee' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                🏠 Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/employee/books')}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${location.pathname === '/books' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                📚 Books
+              </button>
+              <button
+                onClick={() => navigate('/employee/requests')}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${location.pathname === '/requests' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                📋 Requests
+              </button>
+            </>
+          )}
+
+          {user.role === 'admin' && (
+            <>
+              <button
+                onClick={() => navigate('/admin')}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${location.pathname === '/admin' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                🏠 Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/admin/books')}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${location.pathname === '/admin/books' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                📚 Books
+              </button>
+              <button
+                onClick={() => navigate('/admin/requests')}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${location.pathname === '/admin/requests' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'}`}
+              >
+                📋 Requests
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 };
 

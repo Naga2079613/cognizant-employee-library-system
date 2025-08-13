@@ -26,7 +26,7 @@ export class DataService {
       const matchesQuery = !query || 
         book.title.toLowerCase().includes(query.toLowerCase()) ||
         book.author.toLowerCase().includes(query.toLowerCase()) ||
-        book.category.toLowerCase().includes(query.toLowerCase());
+        (book.category && book.category.toLowerCase().includes(query.toLowerCase()));
       
       const matchesCategory = !category || book.category === category;
       
@@ -36,6 +36,11 @@ export class DataService {
 
   static getAvailableBooks(): Book[] {
     return this.books.filter(book => book.availableCopies > 0);
+  }
+
+  static getRandomBooks(count: number = 7): Book[] {
+    const shuffled = [...this.books].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
   }
 
   static updateBook(id: string, updates: Partial<Book>): boolean {

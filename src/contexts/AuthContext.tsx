@@ -5,6 +5,9 @@ import { DataService } from '../services/dataService';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Export the context for testing
+export { AuthContext };
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -26,7 +29,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Check for stored authentication
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        // Handle invalid JSON in localStorage
+        localStorage.removeItem('currentUser');
+      }
     }
     setLoading(false);
   }, []);

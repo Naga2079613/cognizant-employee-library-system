@@ -4,14 +4,19 @@ import type { AppNotification, NotificationContextType } from '../types';
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+// Export the context for testing
+export { NotificationContext };
+
 // eslint-disable-next-line react-refresh/only-export-components
-export const useNotification = () => {
+function useNotification() {
   const context = useContext(NotificationContext);
   if (context === undefined) {
     throw new Error('useNotification must be used within a NotificationProvider');
   }
   return context;
-};
+}
+
+export { useNotification };
 
 interface NotificationProviderProps {
   children: ReactNode;
@@ -19,13 +24,15 @@ interface NotificationProviderProps {
 
 export const NotificationProvider = ({ children }: NotificationProviderProps) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [counter, setCounter] = useState(0);
 
   const addNotification = (notification: Omit<AppNotification, 'id' | 'timestamp'>) => {
     const newNotification: AppNotification = {
       ...notification,
-      id: Date.now().toString(),
+      id: `${Date.now()}-${counter}`,
       timestamp: new Date().toISOString()
     };
+    setCounter(prev => prev + 1);
     setNotifications(prev => [...prev, newNotification]);
     
     // Auto-remove after 5 seconds

@@ -1,38 +1,4 @@
 import { useState, useEffect } from 'react';
-import {
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  CardActions,
-  TextField,
-  Button,
-  Box,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Avatar,
-  InputAdornment,
-  Divider,
-  Rating,
-  Badge,
-} from '@mui/material';
-import { 
-  Search, 
-  Book, 
-  CalendarToday, 
-  Business, 
-  CheckCircle, 
-  Error,
-  BookmarkBorder,
-  Person
-} from '@mui/icons-material';
 import { DataService } from '../../services/dataService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -43,10 +9,14 @@ const BookCatalog = () => {
   const [filteredBooks, setFilteredBooks] = useState<BookType[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState<BookType | null>(null);
   const [expectedReturnDate, setExpectedReturnDate] = useState('');
-  
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const BOOKS_PER_PAGE = 40;
+
   const { user } = useAuth();
   const { addNotification } = useNotification();
 
@@ -54,67 +24,33 @@ const BookCatalog = () => {
     const allBooks = DataService.getAllBooks();
     setBooks(allBooks);
     setFilteredBooks(allBooks);
+    
+    const uniqueCategories = [...new Set(allBooks.map(book => book.category))];
+    setCategories(uniqueCategories);
   }, []);
 
   useEffect(() => {
     let filtered = books;
 
     if (searchQuery) {
-      filtered = DataService.searchBooks(searchQuery, selectedCategory || undefined);
-    } else if (selectedCategory) {
-      filtered = books.filter(book => book.category === selectedCategory);
+      filtered = filtered.filter(book =>
+        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        book.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        book.category.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (selectedCategory) {
+      filtered = filtered.filter(book => book.category === selectedCategory);
     }
 
     setFilteredBooks(filtered);
-  }, [searchQuery, selectedCategory, books]);
-
-  const categories = DataService.getCategories();
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [books, searchQuery, selectedCategory]);
 
   const handleRequestBook = (book: BookType) => {
-    if (book.availableCopies === 0) {
-      addNotification({
-        type: 'error',
-        title: 'Book Unavailable',
-        message: 'This book is currently out of stock.'
-      });
-      return;
-    }
-
     setSelectedBook(book);
     setRequestDialogOpen(true);
-    
-    // Set default return date to 14 days from now
-    const defaultReturnDate = new Date();
-    defaultReturnDate.setDate(defaultReturnDate.getDate() + 14);
-    setExpectedReturnDate(defaultReturnDate.toISOString().split('T')[0]);
-  };
-
-  const handleSubmitRequest = () => {
-    if (!selectedBook || !user || !expectedReturnDate) return;
-
-    DataService.createRequest({
-      userId: user.id,
-      userName: user.name,
-      userEmail: user.email,
-      bookId: selectedBook.id,
-      bookTitle: selectedBook.title,
-      bookAuthor: selectedBook.author,
-      expectedReturnDate: expectedReturnDate
-    });
-
-    addNotification({
-      type: 'success',
-      title: 'Request Submitted',
-      message: `Your request for "${selectedBook.title}" has been submitted successfully.`
-    });
-
-    setRequestDialogOpen(false);
-    setSelectedBook(null);
-    setExpectedReturnDate('');
-    
-    // Refresh books to update availability
-    const updatedBooks = DataService.getAllBooks();
-    setBooks(updatedBooks);
   };
 
   const handleCloseDialog = () => {
@@ -123,372 +59,346 @@ const BookCatalog = () => {
     setExpectedReturnDate('');
   };
 
+  const handleSubmitRequest = () => {
+    if (!user || !selectedBook || !expectedReturnDate) return;
+
+    const requestData = {
+      userId: user.id,
+      userName: user.name,
+      userEmail: user.email,
+      bookId: selectedBook.id,
+      bookTitle: selectedBook.title,
+      bookAuthor: selectedBook.author,
+      expectedReturnDate,
+    };
+
+    try {
+      const result = DataService.createRequest(requestData);
+      
+      if (result) {
+        addNotification({
+          type: 'success',
+          title: 'Success',
+          message: 'Book request submitted successfully!'
+        });
+        handleCloseDialog();
+        
+        // Refresh books data
+        const allBooks = DataService.getAllBooks();
+        setBooks(allBooks);
+      }
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to submit book request. Please try again.'
+      });
+    }
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredBooks.length / BOOKS_PER_PAGE);
+  const startIndex = (currentPage - 1) * BOOKS_PER_PAGE;
+  const endIndex = startIndex + BOOKS_PER_PAGE;
+  const currentBooks = filteredBooks.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+
   return (
-    <Container maxWidth={false} sx={{ py: 4, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', minHeight: '100vh', width: '100%', px: 4 }}>
-      <Box sx={{ textAlign: 'center', mb: 4, color: 'white' }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold' }}>
+    <div className="min-h-screen w-full p-6">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold gradient-text mb-3 drop-shadow-lg">
           📚 Book Catalog 📚
-        </Typography>
-        <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
+        </h1>
+        <p className="text-xl text-white/90 drop-shadow">
           Browse and request books from our library
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Search and Filter Section */}
-      <Box 
-        sx={{ 
-          mb: 4,
-          background: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '16px',
-          p: 3,
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
-        }}
-      >
-        <Box 
-          sx={{ 
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
-            gap: 2 
-          }}
-        >
-          <TextField
-            fullWidth
-            placeholder="Search books by title, author, or category..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderRadius: '12px',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                },
-                '&.Mui-focused': {
-                  backgroundColor: 'white',
-                }
-              }
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search sx={{ color: 'primary.main' }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <FormControl 
-            fullWidth
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                borderRadius: '12px',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                },
-                '&.Mui-focused': {
-                  backgroundColor: 'white',
-                }
-              }
-            }}
-          >
-            <InputLabel sx={{ color: 'text.primary' }}>Category</InputLabel>
-            <Select
+      <div className="mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500">🔍</span>
+              </div>
+              <input
+                type="text"
+                placeholder="Search books by title, author, or category..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="modern-input w-full pl-10 py-3 text-gray-700"
+              />
+            </div>
+          </div>
+          <div>
+            <select
               value={selectedCategory}
-              label="Category"
               onChange={(e) => setSelectedCategory(e.target.value)}
+              className="modern-input w-full py-3 text-gray-700"
             >
-              <MenuItem value="">All Categories</MenuItem>
+              <option value="">All Categories</option>
               {categories.map((category) => (
-                <MenuItem key={category} value={category}>
+                <option key={category} value={category}>
                   {category}
-                </MenuItem>
+                </option>
               ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </Box>
+            </select>
+          </div>
+        </div>
+      </div>
 
       {/* Results Info */}
-      <Box 
-        sx={{ 
-          textAlign: 'center', 
-          mb: 3,
-          background: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '12px',
-          p: 2,
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
-        }}
-      >
-        <Typography variant="body1" sx={{ color: 'white', fontWeight: 'bold' }}>
-          📖 Showing {filteredBooks.length} of {books.length} books
-        </Typography>
-        {searchQuery && (
-          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mt: 0.5 }}>
-            Search results for: "{searchQuery}"
-          </Typography>
-        )}
-      </Box>
+      <div className="text-center mb-6">
+        <p className="text-white/80 text-lg">
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredBooks.length)} of {filteredBooks.length} books
+          {totalPages > 1 && (
+            <span className="text-white/60"> • Page {currentPage} of {totalPages}</span>
+          )}
+        </p>
+      </div>
 
-      {/* Books Grid - 4 per row, equal sizes */}
-      <Box 
-        sx={{ 
-          display: 'grid',
-          gridTemplateColumns: { 
-            xs: '1fr', 
-            sm: 'repeat(2, 1fr)', 
-            md: 'repeat(3, 1fr)',
-            lg: 'repeat(4, 1fr)' 
-          },
-          gap: 3 
-        }}
-      >
-        {filteredBooks.map((book) => (
-          <Card 
+      {/* Books Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+        {currentBooks.map((book) => (
+          <div 
             key={book.id}
-            sx={{ 
-              height: '380px', 
-              display: 'flex', 
-              flexDirection: 'column',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-              borderRadius: '16px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-              position: 'relative',
-              overflow: 'hidden',
-              '&:hover': {
-                transform: 'translateY(-8px)',
-                boxShadow: '0 16px 40px rgba(0,0,0,0.2)',
-              },
-            }}
+            className="glass-card h-[320px] flex flex-col transition-all duration-300 hover:-translate-y-2 hover:shadow-elegant-hover group overflow-hidden"
           >
-                       <CardContent sx={{ flexGrow: 1, p: 3, pb: 1 }}>
-              {/* Header Section */}
-              <Box display="flex" alignItems="flex-start" mb={2}>
-                <Avatar 
-                  sx={{ 
-                    mr: 2, 
-                    bgcolor: 'primary.main',
-                    width: 48,
-                    height: 48,
-                    fontSize: '1.2rem'
-                  }}
-                >
-                  <Book />
-                </Avatar>
-                <Box sx={{ minWidth: 0, flex: 1 }}>
-                  <Typography 
-                    variant="h6" 
-                    component="h2" 
-                    sx={{ 
-                      fontSize: '1.1rem',
-                      fontWeight: 'bold',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.3,
-                      height: '2.6em',
-                      color: 'text.primary',
-                      mb: 0.5
-                    }}
-                  >
+            {/* Book Content - Takes up available space */}
+            <div className="flex-1 p-4 flex flex-col min-h-0">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center text-white text-lg shadow-md flex-shrink-0">
+                  📚
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-800 text-base leading-tight mb-1 group-hover:text-primary-600 transition-colors line-clamp-2">
                     {book.title}
-                  </Typography>
-                  <Box display="flex" alignItems="center" gap={0.5}>
-                    <Person sx={{ fontSize: 14, color: 'text.secondary' }} />
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontWeight: 500
-                      }}
-                    >
-                      {book.author}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
+                  </h3>
+                  <p className="text-xs text-gray-600 font-medium">
+                    by {book.author}
+                  </p>
+                </div>
+              </div>
               
-              {/* Description */}
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  mb: 2,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  lineHeight: 1.4,
-                  height: '2.5em',
-                  color: 'text.secondary',
-                  fontStyle: 'italic'
-                }}
-              >
-                "{book.description}"
-              </Typography>
+              {/* Description - Flexible height */}
+              <div className="mb-2 flex-1 min-h-0">
+                <p className="text-xs text-gray-700 leading-relaxed line-clamp-2">
+                  {book.description}
+                </p>
+              </div>
               
-              <Divider sx={{ my: 2 }} />
-
-              {/* Book Details */}
-              <Box sx={{ mb: 2 }}>
-                <Box display="flex" alignItems="center" gap={0.5} mb={1}>
-                  <BookmarkBorder sx={{ fontSize: 16, color: 'primary.main' }} />
-                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    {book.category}
-                  </Typography>
-                </Box>
-                
-                {book.publisher && (
-                  <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
-                    <Business sx={{ fontSize: 14, color: 'text.secondary' }} />
-                    <Typography variant="caption" color="text.secondary">
-                      {book.publisher}
-                    </Typography>
-                  </Box>
+              {/* Category and Status - Fixed height */}
+              <div className="flex flex-wrap gap-1 mb-2 min-h-[24px]">
+                <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-semibold rounded-full">
+                  {book.category}
+                </span>
+                <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  book.availableCopies > 0 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-red-100 text-red-700'
+                }`}>
+                  {book.availableCopies > 0 ? '✅ Available' : '❌ Out of Stock'}
+                </span>
+              </div>
+              
+              {/* Availability Info - Fixed height */}
+              <div className="p-2 bg-gray-50 rounded-lg border mb-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 font-medium">Available:</span>
+                  <span className="font-bold text-gray-800">
+                    {book.availableCopies} of {book.totalCopies}
+                  </span>
+                </div>
+                {book.totalCopies > 0 && (
+                  <div className="mt-1">
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          book.availableCopies > 0 ? 'bg-gradient-to-r from-green-400 to-green-600' : 'bg-gray-400'
+                        }`}
+                        style={{ width: `${(book.availableCopies / book.totalCopies) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
                 )}
-                
-                {book.publishedYear && (
-                  <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
-                    <CalendarToday sx={{ fontSize: 14, color: 'text.secondary' }} />
-                    <Typography variant="caption" color="text.secondary">
-                      Published {book.publishedYear}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-
-              {/* Availability Status */}
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Chip 
-                  label={`${book.availableCopies} of ${book.totalCopies} available`}
-                  size="small"
-                  color={book.availableCopies > 0 ? 'success' : 'error'}
-                  variant="filled"
-                  sx={{ 
-                    fontWeight: 'bold',
-                    fontSize: '0.75rem'
-                  }}
-                />
-                {book.availableCopies > 0 && (
-                  <Typography variant="caption" color="success.main" sx={{ fontWeight: 'bold' }}>
-                    ✓ Available
-                  </Typography>
-                )}
-              </Box>
-
-              {/* ISBN Info */}
-              <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.7rem' }}>
-                ISBN: {book.isbn}
-              </Typography>
-            </CardContent>
-            
-            <CardActions sx={{ p: 3, pt: 0 }}>
-              <Button
-                fullWidth
-                variant={book.availableCopies > 0 ? "contained" : "outlined"}
+              </div>
+              
+              {/* Action Button - Always at bottom with consistent height */}
+              <button
                 onClick={() => handleRequestBook(book)}
                 disabled={book.availableCopies === 0}
-                sx={{ 
-                  height: '42px',
-                  fontWeight: 'bold',
-                  fontSize: '0.9rem',
-                  borderRadius: '10px',
-                  ...(book.availableCopies === 0 && {
-                    backgroundColor: 'grey.100',
-                    color: 'text.disabled',
-                    border: '1px solid',
-                    borderColor: 'grey.300'
-                  })
-                }}
-                startIcon={book.availableCopies === 0 ? <Error /> : <Book />}
+                className={`w-full h-10 px-3 rounded-lg text-xs font-semibold transition-all duration-300 shadow-sm flex items-center justify-center ${
+                  book.availableCopies > 0
+                    ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary-500/25'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                {book.availableCopies === 0 ? 'Out of Stock' : 'Request Book'}
-              </Button>
-            </CardActions>
-          </Card>
+                {book.availableCopies > 0 ? '📋 Request Book' : '❌ Not Available'}
+              </button>
+            </div>
+          </div>
         ))}
-      </Box>
+      </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mb-8">
+          <button
+            onClick={goToPrevPage}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg font-semibold ${
+              currentPage === 1
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-white/20 text-white hover:bg-white/30'
+            } transition-all duration-200`}
+          >
+            ← Previous
+          </button>
+          
+          <div className="flex space-x-1">
+            {/* Show page numbers */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (currentPage <= 3) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = currentPage - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => goToPage(pageNum)}
+                  className={`w-10 h-10 rounded-lg font-semibold ${
+                    currentPage === pageNum
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  } transition-all duration-200`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+          
+          <button
+            onClick={goToNextPage}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg font-semibold ${
+              currentPage === totalPages
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-white/20 text-white hover:bg-white/30'
+            } transition-all duration-200`}
+          >
+            Next →
+          </button>
+        </div>
+      )}
 
       {filteredBooks.length === 0 && (
-        <Box 
-          textAlign="center" 
-          mt={6}
-          sx={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '16px',
-            p: 4,
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          <Book sx={{ fontSize: 64, color: 'rgba(255, 255, 255, 0.5)', mb: 2 }} />
-          <Typography variant="h5" sx={{ color: 'white', mb: 1, fontWeight: 'bold' }}>
-            No books found
-          </Typography>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 2 }}>
-            We couldn't find any books matching your search criteria
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-            Try adjusting your search terms or browse different categories
-          </Typography>
-        </Box>
+        <div className="text-center py-12">
+          <div className="text-6xl mb-4">📚</div>
+          <h3 className="text-xl font-bold text-white mb-2">
+            No books found matching your criteria
+          </h3>
+          <p className="text-white/80">
+            Try adjusting your search terms or filters
+          </p>
+        </div>
       )}
 
       {/* Request Dialog */}
-      <Dialog open={requestDialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Request Book</DialogTitle>
-        <DialogContent>
-          {selectedBook && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                {selectedBook.title}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                by {selectedBook.author}
-              </Typography>
+      {requestDialogOpen && selectedBook && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="glass-card max-w-md w-full p-6 animate-slide-in-up">
+            <div className="text-center mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white text-xl mx-auto mb-3 shadow-lg">
+                📚
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-1">Request Book</h2>
+              <p className="text-sm text-gray-600">Submit your book request</p>
+            </div>
+            
+            <div className="mb-4">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-200 mb-3">
+                <h3 className="font-bold text-gray-800 text-base mb-1">{selectedBook.title}</h3>
+                <p className="text-sm text-gray-600 mb-2">by {selectedBook.author}</p>
+                <span className="inline-block px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+                  {selectedBook.category}
+                </span>
+              </div>
               
-              <Box mt={3}>
-                <TextField
-                  fullWidth
-                  label="Expected Return Date"
+              <div className="mb-3">
+                <label htmlFor="returnDate" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Expected Return Date *
+                </label>
+                <input
+                  id="returnDate"
                   type="date"
                   value={expectedReturnDate}
                   onChange={(e) => setExpectedReturnDate(e.target.value)}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  inputProps={{
-                    min: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
-                  }}
+                  min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                  className="modern-input w-full py-2.5 text-sm"
                 />
-              </Box>
+              </div>
               
-              <Typography variant="body2" color="textSecondary" mt={2}>
-                You can keep the book for up to 30 days. Please ensure to return it by the specified date.
-              </Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button 
-            onClick={handleSubmitRequest} 
-            variant="contained"
-            disabled={!expectedReturnDate}
-          >
-            Submit Request
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-amber-600 text-base flex-shrink-0">ℹ️</span>
+                  <div>
+                    <p className="text-xs text-amber-800 font-medium mb-1">Important Note:</p>
+                    <p className="text-xs text-amber-700 leading-relaxed">
+                      Books can be kept for up to 30 days. Please return by the specified date to avoid late fees.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleCloseDialog}
+                className="flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-semibold text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitRequest}
+                disabled={!expectedReturnDate}
+                className={`flex-1 px-4 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-md text-sm ${
+                  expectedReturnDate
+                    ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/25'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {expectedReturnDate ? '🚀 Submit Request' : 'Select Date First'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
