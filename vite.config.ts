@@ -6,51 +6,18 @@ export default defineConfig({
   plugins: [react()],
   base: '/cognizant-employee-library-system/', // Correct GitHub Pages base path
   build: {
+    target: 'es2015', // Use compatible target
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // React core
-          if (id.includes('react') || id.includes('react-dom')) {
-            return 'react-vendor';
-          }
-          // React Router
-          if (id.includes('react-router')) {
-            return 'router-vendor';
-          }
-          // Material-UI core
-          if (id.includes('@mui/material') || id.includes('@emotion')) {
-            return 'mui-core';
-          }
-          // Material-UI icons (separate chunk for icons)
-          if (id.includes('@mui/icons-material')) {
-            return 'mui-icons';
-          }
-          // Admin portal components
-          if (id.includes('src/components/AdminPortal')) {
-            return 'admin-portal';
-          }
-          // Employee portal components
-          if (id.includes('src/components/EmployeePortal')) {
-            return 'employee-portal';
-          }
-          // Common components and contexts
-          if (id.includes('src/components/common') || id.includes('src/contexts')) {
-            return 'common-components';
-          }
-          // Other node_modules
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-        },
-      },
-    },
-    // Optimize build
-    target: 'esnext',
-    // Increase chunk size warning limit to 1000kb
-    chunkSizeWarningLimit: 1000,
+        // Let Vite handle chunking automatically to avoid circular dependency issues
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
   },
-  // Enable tree shaking
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom'],
+    include: ['react', 'react-dom', 'react-router-dom', '@mui/material', '@mui/icons-material'],
   },
 })
