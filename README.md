@@ -4,9 +4,7 @@ A comprehensive React TypeScript web application for managing a company library 
 
 ## 🌐 Live Demo
 
-**GitHub Pages**: [View Live Application](https://YOUR_USERNAME.github.io/REPOSITORY_NAME/)
-
-> Replace `YOUR_USERNAME` and `REPOSITORY_NAME` with your actual GitHub details
+**GitHub Pages**: [View Live Application](https://naga2079613.github.io/cognizant-employee-library-system/)
 
 ## 🚀 Features
 
@@ -152,7 +150,7 @@ src/
 - **Loading States**: Proper loading indicators for better UX
 - **Error Handling**: User-friendly error messages
 
-## � Deployment
+## 🚀 Deployment
 
 ### GitHub Pages Deployment
 
@@ -162,7 +160,7 @@ This project is configured with GitHub Actions for automatic deployment to GitHu
 
 1. **Create GitHub Repository**:
    ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/REPOSITORY_NAME.git
+   git remote add origin https://github.com/Naga2079613/cognizant-employee-library-system.git
    git push -u origin main
    ```
 
@@ -175,7 +173,7 @@ This project is configured with GitHub Actions for automatic deployment to GitHu
 3. **Automatic Deployment**:
    - Every push to the `main` branch triggers automatic build and deployment
    - The workflow builds the React app and deploys to GitHub Pages
-   - Live site will be available at: `https://YOUR_USERNAME.github.io/REPOSITORY_NAME/`
+   - Live site will be available at: `https://naga2079613.github.io/cognizant-employee-library-system/`
 
 #### Manual Deployment:
 
@@ -194,7 +192,7 @@ npm run build
 - **Firebase Hosting**: Use Firebase CLI to deploy
 - **AWS S3**: Static website hosting with CloudFront CDN
 
-## �🔮 Future Enhancements
+## 🔮 Future Enhancements
 
 ### Backend Integration
 - Replace mock data service with actual API
@@ -208,12 +206,6 @@ npm run build
 - Barcode scanning for book management
 - Due date reminders and late fees
 - Multi-library support
-
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
 
 ---
 
